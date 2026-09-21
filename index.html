@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ff6b00">
+<title>Apna Dukaan</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f6f7fb;color:#222}
+header{background:linear-gradient(135deg,#ff6b00,#ffb300);color:#fff;padding:18px 14px 22px;position:sticky;top:0;z-index:5}
+.logo{font-size:25px;font-weight:800}.tag{font-size:13px;margin-top:3px}
+.search{margin-top:14px;width:100%;padding:12px 14px;border:0;border-radius:12px;font-size:16px}
+.wrap{max-width:900px;margin:auto;padding:14px}.cats{display:flex;gap:9px;overflow:auto;padding:4px 0 12px}
+.cat{white-space:nowrap;border:0;background:#fff;padding:9px 13px;border-radius:20px;box-shadow:0 2px 8px #ddd;cursor:pointer}
+.cat.active{background:#ff6b00;color:#fff}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:#fff;border-radius:15px;padding:13px;box-shadow:0 2px 10px #e4e4e4}
+.pic{height:105px;border-radius:12px;background:#fff3e8;display:flex;align-items:center;justify-content:center;font-size:48px}
+.name{font-weight:700;margin:9px 0 4px}.small{font-size:13px;color:#777}.price{font-size:18px;font-weight:800;margin:7px 0}
+button{cursor:pointer}.add{width:100%;border:0;border-radius:10px;background:#ff6b00;color:#fff;padding:10px;font-weight:700}
+.cartbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);width:min(92%,520px);background:#222;color:#fff;padding:13px 16px;border-radius:15px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 5px 20px #999}
+.cartbar button{background:#ffb300;border:0;padding:10px 15px;border-radius:10px;font-weight:800}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;padding:18px}.box{background:#fff;max-width:600px;margin:30px auto;padding:18px;border-radius:18px;max-height:90vh;overflow:auto}
+input,textarea,select{width:100%;padding:11px;margin:7px 0 10px;border:1px solid #ddd;border-radius:10px;font-size:15px}
+.row{display:flex;justify-content:space-between;gap:10px;margin:8px 0}.close{float:right;border:0;background:#eee;border-radius:8px;padding:7px 10px}
+.empty{text-align:center;padding:25px;color:#777}.order{background:#25d366;color:white;border:0;padding:13px;border-radius:10px;width:100%;font-size:16px;font-weight:800}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">🛍️ Apna Dukaan</div>
+    <div class="tag">आपके घर के पास • 3 km Home Delivery</div>
+    <input id="search" class="search" placeholder="सामान खोजें… जैसे चावल, पेन, बल्ब">
+    <button onclick="openAdmin()" style="margin-top:10px;width:100%;padding:11px;border:0;border-radius:10px;background:#222;color:#fff;font-weight:700">⚙️ दुकान Admin Panel</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <h3>श्रेणी</h3>
+  <div id="cats" class="cats"></div>
+  <h3>सामान</h3>
+  <div id="products" class="grid"></div>
+</main>
+
+<div class="wrap" style="padding-bottom:90px">
+  <div class="card" style="margin-top:8px">
+    <h3>📦 Product Management</h3>
+    <p class="small">ऊपर <b>⚙️ दुकान Admin Panel</b> खोलकर नाम, कीमत, category और फोटो भरें और Save करें। Product इसी browser में अपने-आप सुरक्षित रहेगा।</p>
+  </div>
+  <div class="card">
+    <h3>🚚 पूरा Delivery Process</h3>
+    <ol class="small" style="line-height:1.8">
+      <li>Customer सामान चुनकर Cart बनाता है।</li>
+      <li>नाम, मोबाइल और पूरा पता भरता है।</li>
+      <li>“WhatsApp पर Order भेजें” दबाता है।</li>
+      <li>Order आपके WhatsApp पर सामान और कुल रकम के साथ आता है।</li>
+      <li>आप ग्राहक को WhatsApp/फोन से Order confirm करते हैं।</li>
+      <li>दुकान में सामान पैक करते हैं और भुगतान/बकाया तय करते हैं।</li>
+      <li>3 km के अंदर ग्राहक के पते पर Delivery करते हैं।</li>
+      <li>Delivery के बाद Order को अपने हिसाब से WhatsApp में पूरा/Delivered मान सकते हैं।</li>
+    </ol>
+  </div>
+</div>
+
+<div id="cartbar" class="cartbar" style="display:none">
+  <span id="cartinfo"></span><button onclick="openCart()">🛒 Cart देखें</button>
+</div>
+
+<div id="adminModal" class="modal">
+ <div class="box">
+  <button class="close" onclick="closeAdmin()">✕</button>
+  <h2>⚙️ Apna Dukaan Admin</h2>
+  <p class="small">यहीं से नया सामान जोड़ें। Product आपकी इसी browser में save रहेगा।</p>
+  <input id="pn" placeholder="Product का नाम">
+  <input id="pp" type="number" min="0" placeholder="कीमत (₹)">
+  <input id="pc" placeholder="Category जैसे किराना">
+  <input id="pe" placeholder="Emoji (जैसे 🍚) — फोटो न हो तो">
+  <label class="small">📷 Product फोटो</label>
+  <input id="pi" type="file" accept="image/*" onchange="previewImage(this)">
+  <div id="preview" style="margin:8px 0"></div>
+  <button class="add" onclick="saveProduct()">➕ Product Save करें</button>
+  <hr>
+  <h3>📦 आपके Products</h3>
+  <div id="adminProducts"></div>
+ </div>
+</div>
+
+<div id="modal" class="modal">
+ <div class="box">
+  <button class="close" onclick="closeCart()">✕</button>
+  <h2>🛒 आपका Cart</h2>
+  <div style="background:#fff7e8;padding:12px;border-radius:12px;margin-bottom:12px;font-size:14px">
+  <b>ऑर्डर कैसे होगा?</b><br>
+  1️⃣ सामान Cart में डालें → 2️⃣ नाम, मोबाइल और पूरा पता भरें → 3️⃣ WhatsApp पर Order भेजें → 4️⃣ दुकान पर Order मिलेगा → 5️⃣ सामान तैयार करके आप 3 km के अंदर Delivery करेंगे।
+  </div>
+  <div id="cartlist"></div>
+  <hr><div class="row"><b>कुल</b><b id="total"></b></div>
+  <h3>डिलीवरी के लिए जानकारी</h3>
+  <input id="cust" placeholder="आपका नाम">
+  <input id="phone" placeholder="मोबाइल नंबर" inputmode="numeric">
+  <textarea id="address" placeholder="पूरा पता / मोहल्ला / गाँव"></textarea>
+  <button class="order" onclick="sendOrder()">📲 WhatsApp पर Order भेजें</button>
+  <p class="small">Order आपके WhatsApp नंबर <b>8825162940</b> पर जाएगा।</p>
+ </div>
+</div>
+
+<script>
+const SHOP_WHATSAPP="918825162940"; // ← यहाँ अपनी दुकान का WhatsApp नंबर डालें
+const DEFAULT_PRODUCTS=[
+ {n:"आटा 5 kg",p:260,c:"किराना",e:"🌾"},{n:"चावल 5 kg",p:350,c:"किराना",e:"🍚"},
+ {n:"सरसों तेल 1 L",p:160,c:"किराना",e:"🫗"},{n:"बिस्कुट",p:10,c:"किराना",e:"🍪"},
+ {n:"कॉपी",p:40,c:"स्टेशनरी",e:"📒"},{n:"पेन",p:10,c:"स्टेशनरी",e:"🖊️"},
+ {n:"पेंसिल बॉक्स",p:80,c:"स्टेशनरी",e:"✏️"},{n:"LED बल्ब 9W",p:90,c:"इलेक्ट्रिकल",e:"💡"},
+ {n:"स्विच",p:45,c:"इलेक्ट्रिकल",e:"🔘"},{n:"प्लग",p:55,c:"इलेक्ट्रिकल",e:"🔌"},
+ {n:"PVC पाइप",p:120,c:"प्लंबिंग",e:"🧰"},{n:"नल",p:250,c:"प्लंबिंग",e:"🚰"},
+ {n:"स्क्रू पैकेट",p:60,c:"हार्डवेयर",e:"🔩"},{n:"हथौड़ी",p:180,c:"हार्डवेयर",e:"🔨"},
+ {n:"पेंट ब्रश",p:70,c:"पेंट",e:"🖌️"},{n:"पेंट 1 L",p:220,c:"पेंट",e:"🪣"}
+];
+let products=JSON.parse(localStorage.getItem("apnaProducts")||"null")||DEFAULT_PRODUCTS;
+let cat="सभी",cart={};
+const cats=["सभी",...new Set(products.map(x=>x.c))];
+function renderCats(){catsEl.innerHTML=cats.map(x=>`<button class="cat ${x===cat?'active':''}" onclick="cat='${x}';render()">${x}</button>`).join("")}
+function render(){
+ renderCats();
+ const q=search.value.toLowerCase();
+ const arr=products.filter(x=>(cat==="सभी"||x.c===cat)&&x.n.toLowerCase().includes(q));
+ productsEl.innerHTML=arr.map((x,i)=>`<div class="card"><div class="pic">${x.img?`<img src="${x.img}" style="max-width:100%;max-height:100%;border-radius:12px">`:x.e}</div><div class="name">${x.n}</div><div class="small">${x.c}</div><div class="price">₹${x.p}</div><button class="add" onclick="add('${x.n}')">+ Cart में डालें</button></div>`).join("")||'<div class="empty">सामान नहीं मिला</div>';
+ updateCart();
+}
+function add(n){cart[n]=(cart[n]||0)+1;updateCart()}
+function updateCart(){
+ let count=Object.values(cart).reduce((a,b)=>a+b,0),sum=Object.entries(cart).reduce((s,[n,q])=>s+products.find(x=>x.n===n).p*q,0);
+ cartbar.style.display=count?"flex":"none";cartinfo.textContent=`🛒 ${count} सामान • ₹${sum}`;
+}
+function openCart(){
+ modal.style.display="block";
+ let entries=Object.entries(cart);
+ cartlist.innerHTML=entries.length?entries.map(([n,q])=>{let x=products.find(a=>a.n===n);return `<div class="row"><span>${x.e} ${n} × ${q}</span><span>₹${x.p*q} <button onclick="cart['${n}']--;if(cart['${n}']<=0)delete cart['${n}'];openCart()">−</button></span></div>`}).join(""):"<div class='empty'>Cart खाली है</div>";
+ total.textContent="₹"+entries.reduce((s,[n,q])=>s+products.find(x=>x.n===n).p*q,0);updateCart()
+}
+function closeCart(){modal.style.display="none"}
+function sendOrder(){
+ let entries=Object.entries(cart); if(!entries.length)return alert("पहले सामान Cart में डालें");
+ let name=cust.value.trim(),phoneNo=phone.value.trim(),addr=address.value.trim();
+ if(!name||!phoneNo||!addr)return alert("नाम, मोबाइल और पता भरें");
+ let lines=entries.map(([n,q])=>{let x=products.find(a=>a.n===n);return `${x.n} × ${q} = ₹${x.p*q}`});
+ let sum=entries.reduce((s,[n,q])=>s+products.find(x=>x.n===n).p*q,0);
+ let msg=`*Apna Dukaan - नया Order*%0A%0A${lines.join("%0A")}%0A%0A*कुल: ₹${sum}*%0Aनाम: ${encodeURIComponent(name)}%0Aमोबाइल: ${encodeURIComponent(phoneNo)}%0Aपता: ${encodeURIComponent(addr)}`;
+ location.href=`https://wa.me/${SHOP_WHATSAPP}?text=${msg}`;
+}
+
+let selectedImage="";
+function openAdmin(){adminModal.style.display="block";renderAdmin()}
+function closeAdmin(){adminModal.style.display="none"}
+function previewImage(input){
+ const f=input.files&&input.files[0]; if(!f)return;
+ const reader=new FileReader();
+ reader.onload=()=>{selectedImage=reader.result;preview.innerHTML=`<img src="${selectedImage}" style="width:90px;height:90px;object-fit:cover;border-radius:12px">`};
+ reader.readAsDataURL(f);
+}
+function saveProduct(){
+ const n=pn.value.trim(), pval=Number(pp.value), c=pc.value.trim(), e=pe.value.trim()||"🛍️";
+ if(!n||!c||!Number.isFinite(pval)||pval<0)return alert("नाम, कीमत और Category भरें");
+ products.push({n,p:pval,c,e,img:selectedImage||""});
+ localStorage.setItem("apnaProducts",JSON.stringify(products));
+ pn.value="";pp.value="";pc.value="";pe.value="";pi.value="";preview.innerHTML="";selectedImage="";
+ render();renderAdmin();alert("Product Save हो गया ✅");
+}
+function deleteProduct(i){
+ if(!confirm("यह Product हटाना है?"))return;
+ products.splice(i,1);localStorage.setItem("apnaProducts",JSON.stringify(products));renderAdmin();render();
+}
+function renderAdmin(){
+ adminProducts.innerHTML=products.map((x,i)=>`<div class="row" style="align-items:center;border-bottom:1px solid #eee;padding:7px 0"><span>${x.img?`<img src="${x.img}" style="width:42px;height:42px;object-fit:cover;border-radius:8px">`:x.e} ${x.n}<br><span class="small">₹${x.p} • ${x.c}</span></span><button onclick="deleteProduct(${i})" style="border:0;background:#fee;color:#b00;padding:8px;border-radius:8px">🗑️</button></div>`).join("");
+}
+const adminModal=document.getElementById("adminModal"),pn=document.getElementById("pn"),pp=document.getElementById("pp"),pc=document.getElementById("pc"),pe=document.getElementById("pe"),pi=document.getElementById("pi"),preview=document.getElementById("preview"),adminProducts=document.getElementById("adminProducts");
+const catsEl=document.getElementById("cats"),productsEl=document.getElementById("products"),search=document.getElementById("search"),modal=document.getElementById("modal"),cartbar=document.getElementById("cartbar"),cartinfo=document.getElementById("cartinfo"),cartlist=document.getElementById("cartlist"),total=document.getElementById("total"),cust=document.getElementById("cust"),phone=document.getElementById("phone"),address=document.getElementById("address");
+search.addEventListener("input",render);render();
+</script>
+<script>
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
+</script>
+</body>
+</html>
